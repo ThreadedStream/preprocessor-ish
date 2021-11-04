@@ -1,15 +1,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define BUFFER_SIZE 12400
+#define BUFFER_SIZE 2400
+
 #define PRINT_GARBAGE \
 if (1) { \
     printf("garbage compiler"); \
 }
 
-#define PRINT_GARBAGE_2 if (1) { \
-    printf("garbage compiler 2"); \
-}
+//#define PRINT_GARBAGE_2 if (1) { \
+//    printf("garbage compiler 2"); \
+//}
+
+/*
+
+Supposed to be completely ignored
+
+*/
 
 
 static void * allocateBuffer() {
@@ -20,4 +27,8 @@ static void * allocateBuffer() {
 
 static void freeBuffer(void* ptr) {
     free(ptr);
+}
+
+static void dummyDefineTest() {
+    PRINT_GARBAGE
 }
