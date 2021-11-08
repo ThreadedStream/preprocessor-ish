@@ -1,34 +1,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define BUFFER_SIZE 2400
 
-#define PRINT_GARBAGE \
-if (1) { \
-    printf("garbage compiler"); \
-}
+// int main ( int argc , const char * argv ) {
 
-//#define PRINT_GARBAGE_2 if (1) { \
-//    printf("garbage compiler 2"); \
-//}
+int main(int argc, const char* argv[]) {
+    int a = 32;
+    int b = 122;
 
-/*
+    int c = a + b;
+    c += b;
+    c /= 3;
+    c %= 2;
+    c = a % 5;
 
-Supposed to be completely ignored
+    c = b / 2;
 
-*/
-
-
-static void * allocateBuffer() {
-    void* buffer = malloc(BUFFER_SIZE);
-    PRINT_GARBAGE
-    return buffer;
-}
-
-static void freeBuffer(void* ptr) {
-    free(ptr);
-}
-
-static void dummyDefineTest() {
-    PRINT_GARBAGE
 }

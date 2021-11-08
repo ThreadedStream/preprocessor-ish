@@ -20,24 +20,6 @@ type Parser struct {
 	next    rune
 }
 
-func Init(filename string) (*Parser, error) {
-	var stream, err = os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	var p = &Parser{
-		scanner: new(sc.Scanner),
-	}
-	p.scanner = p.scanner.Init(stream)
-	p.stream = stream
-	p.curr = BOF
-	p.prev = BOF
-	p.next = BOF
-
-	return p, nil
-}
-
 func (p *Parser) Rewind() error {
 	_, err := p.stream.Seek(0, 0)
 	if err != nil {
@@ -122,9 +104,15 @@ func (p *Parser) EatMultiLineComment() {
 // source code and fill "macro symbol table" with mappings
 // from symbol names to their respective values the former represent
 func (p *Parser) RetrieveMacroSymbolTable() map[string]string {
+	var newSrc []rune
+
 	macroSymbolTable := make(map[string]string, 0)
 
-	var char = p.Next()
+	var (
+		ident []rune
+		char  = p.Next()
+	)
+
 	for {
 		char = p.Curr()
 		if char == EOF {
@@ -140,6 +128,88 @@ func (p *Parser) RetrieveMacroSymbolTable() map[string]string {
 				macroSymbolTable[string(lhs)] = string(rhs)
 				p.EatWhitespaces()
 				continue
+			case "include":
+				newSrc = append(newSrc, p.advanceTillNextLine()...)
+				continue
+			default:
+				continue
+			}
+		case '/':
+			// here comes a comment -- just skip it
+			switch p.Peek() {
+			case '/':
+				// just a one-liner
+				p.EatSingleLineComment()
+				continue
+			case '*':
+				p.Next()
+				// here we're dealing with a multi-line monster
+				p.EatMultiLineComment()
+				continue
+			}
+		default:
+			ident = append(ident, char)
+			newSrc = append(newSrc, char)
+		}
+	}
+
+	return macroSymbolTable
+}
+
+func replaceInFile(old, new, src []rune, currPos int) {
+	var (
+		oldLen = len(old)
+		newLen = len(new)
+		offset = currPos - oldLen
+	)
+
+	// the most desired case
+	if oldLen == newLen {
+		newIdx := 0
+		for offset < currPos {
+			src[offset] = new[newIdx]
+			offset++
+			newIdx++
+		}
+	} else if oldLen > newLen {
+		newIdx := 0
+		for offset < newLen {
+			src[offset] = new[newIdx]
+			offset++
+			newIdx++
+		}
+	} else {
+		newIdx := 0
+		for offset < oldLen {
+			src[offset] = new[newIdx]
+			offset++
+			newIdx++
+		}
+		//newOldDiff := newLen - oldLen
+	}
+
+}
+
+func (p *Parser) Preprocess(macroSymbolTable map[string]string) {
+	err := p.Rewind()
+	if err != nil {
+		panic(err)
+	}
+
+	var char = p.Next()
+	for {
+		char = p.Curr()
+		if char == EOF {
+			break
+		}
+
+		switch char {
+		case '#':
+			macro := p.determineMacro()
+			switch macro {
+			case "define":
+				// ignore define macros
+				p.advanceTillNextLine()
 			case "include":
 				p.advanceTillNextLine()
 				p.EatWhitespaces()
@@ -166,10 +236,6 @@ func (p *Parser) RetrieveMacroSymbolTable() map[string]string {
 		}
 	}
 
-	return macroSymbolTable
-}
-
-func (p *Parser) Preprocess(macroSymbolTable map[string]string) {
 }
 
 func (p *Parser) Finalize() {
@@ -269,11 +335,15 @@ func (p *Parser) determineMacro() string {
 	return string(token)
 }
 
-func (p *Parser) advanceTillNextLine() {
+func (p *Parser) advanceTillNextLine() []rune {
+	var buf []rune
+
 	char := p.Next()
+	buf = append(buf, char)
 	for char != EOF && char != '\r' && char != '\n' {
 		char = p.Next()
+		buf = append(buf, char)
 	}
 
-	return
+	return buf
 }
