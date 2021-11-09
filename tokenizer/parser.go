@@ -1,15 +1,9 @@
-package parser
+package tokenizer
 
 import (
 	"os"
 	sc "text/scanner"
 	"unicode"
-)
-
-// BOF stands for "Beginning of file"
-const (
-	EOF = -1
-	BOF = -2
 )
 
 type Parser struct {

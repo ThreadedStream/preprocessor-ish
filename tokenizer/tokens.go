@@ -1,4 +1,4 @@
-package parser
+package tokenizer
 
 var (
 	keywords = []string{
@@ -18,5 +18,6 @@ type Token struct {
 	line      int
 	column    int
 	isMacro   bool
-	MacroBody string
+	isKeyword bool
+	macroBody interface{}
 }

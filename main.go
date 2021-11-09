@@ -1,31 +1,31 @@
 package main
 
 import (
-	"github.com/ThreadedStream/preprocessor/parser"
+	"github.com/ThreadedStream/preprocessor/tokenizer"
 	"os"
 )
 
 func main() {
-	//var parser, err = Init("sample.h")
+	//var tokenizer, err = Init("arith.h")
 	//if err != nil {
 	//	panic(err)
 	//}
 	//
-	//var _ = parser.RetrieveMacroSymbolTable()
-	//err = parser.Rewind()
+	//var _ = tokenizer.RetrieveMacroSymbolTable()
+	//err = tokenizer.Rewind()
 	//if err != nil {
 	//	panic(err)
 	//}
 	//
-	//var char = parser.Next()
+	//var char = tokenizer.Next()
 	//fmt.Printf("%d", char)
-	//parser.Finalize()
+	//tokenizer.Finalize()
 
-	var stream, err = os.Open("sample.h")
+	var stream, err = os.Open("./sources/macro_flood.h")
 	if err != nil {
 		panic(err)
 	}
-	tokenizer := parser.Init(stream)
+	tokenizer := tokenizer.Init(stream)
 	tokenizer.Tokenize()
 
 	return
