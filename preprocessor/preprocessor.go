@@ -77,7 +77,7 @@ func (p *Preprocessor) Preprocess(path string) {
 		p.Next()
 	}
 
-	outstream, err := os.OpenFile(path, os.O_RDWR, os.ModePerm)
+	outstream, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		panic(err)
 	}

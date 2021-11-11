@@ -2,8 +2,6 @@
 #include <stdio.h>
 
 
-// int main ( int argc , const char * argv ) {
-
 int main(int argc, const char* argv[]) {
     int a = 32;
     int b = 122;
@@ -16,4 +14,6 @@ int main(int argc, const char* argv[]) {
 
     c = b / 2;
 
+
+    return 0;
 }

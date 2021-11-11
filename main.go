@@ -1,51 +1,67 @@
 package main
 
 import (
+	"fmt"
 	"github.com/ThreadedStream/preprocessor/preprocessor"
 	"github.com/ThreadedStream/preprocessor/tokenizer"
 	"os"
+	"time"
 )
 
-func main() {
-	//var tokenizer, err = Init("arith.h")
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//var _ = tokenizer.RetrieveMacroSymbolTable()
-	//err = tokenizer.Rewind()
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//var char = tokenizer.Next()
-	//fmt.Printf("%d", char)
-	//tokenizer.Finalize()
+const (
+	gen = "./gen"
+)
 
-	var stream, err = os.Open("./sources/macro_flood.h")
+const (
+	IN0  = "./sources/macro_flood.h"
+	OUT0 = "./gen/macro_flood_prep.h"
+
+	IN1  = "./sources/arith.h"
+	OUT1 = "./gen/arith_prep.h"
+)
+
+func setupPrerequisites() {
+	_, err := os.Stat(gen)
+	if err != nil {
+		err := os.Mkdir(gen, os.ModeDir)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func main() {
+	setupPrerequisites()
+
+	start := time.Now().UnixMilli()
+	var macroFloodStream, err = os.Open(IN0)
 	if err != nil {
 		panic(err)
 	}
-	tok := tokenizer.Init(stream)
+	tok := tokenizer.Init(macroFloodStream)
 	tok.Tokenize()
 
 	p := preprocessor.Init(tok)
 
-	p.Preprocess()
+	p.Preprocess(OUT0)
+
+	arithStream, err := os.Open(IN1)
+	if err != nil {
+		panic(err)
+	}
+
+	tok = tokenizer.Init(arithStream)
+	tok.Tokenize()
+
+	p = preprocessor.Init(tok)
+
+	p.Preprocess(OUT1)
+
+	end := time.Now().UnixMilli()
+
+	took := end - start
+
+	fmt.Printf("Preprocessing of two files took %d milliseconds\n", took)
 
 	return
-}
-
-func testStreamWrite(path string) {
-	var file, err = os.OpenFile(path, os.O_RDWR, 666)
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = file.Write([]byte("hellothereb"))
-	if err != nil {
-		panic(err)
-	}
-
-	file.Close()
 }
