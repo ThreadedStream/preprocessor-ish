@@ -1,5 +1,16 @@
 package tokenizer
 
+const (
+	IDENT = iota
+	NUMBER
+	KEYWORD
+	OPERATOR
+	MACRO
+	GARBAGE
+)
+
+type TokenType int
+
 var (
 	keywords = []string{
 		"auto", "break", "case", "char",
@@ -13,11 +24,13 @@ var (
 	}
 )
 
+// Token TODO(threadedstream): get rid of IsMacro field
 type Token struct {
-	value     string
-	line      int
-	column    int
-	isMacro   bool
-	isKeyword bool
-	macroBody interface{}
+	Text      string
+	TokType   TokenType
+	Line      int
+	Column    int
+	IsMacro   bool
+	IsKeyword bool
+	MacroBody interface{}
 }

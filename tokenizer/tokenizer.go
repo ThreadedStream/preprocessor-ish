@@ -50,6 +50,7 @@ func (tok *Tokenizer) Tokenize() {
 			if tok.next == '=' {
 				tok.Tokens = append(tok.Tokens, Token{
 					fmt.Sprintf("%c%c", tok.next, tok.curr),
+					OPERATOR,
 					tok.position.Line,
 					tok.position.Column,
 					false,
@@ -66,6 +67,7 @@ func (tok *Tokenizer) Tokenize() {
 			} else {
 				tok.Tokens = append(tok.Tokens, Token{
 					string(tok.curr),
+					OPERATOR,
 					tok.position.Line,
 					tok.position.Column - 1,
 					false,
@@ -74,11 +76,13 @@ func (tok *Tokenizer) Tokenize() {
 				})
 			}
 			break
+
 		// equality, assignment operators
 		case '=':
 			if tok.next == '=' {
 				tok.Tokens = append(tok.Tokens, Token{
 					"==",
+					OPERATOR,
 					tok.position.Line,
 					tok.position.Column - 1,
 					false,
@@ -89,6 +93,7 @@ func (tok *Tokenizer) Tokenize() {
 			} else {
 				tok.Tokens = append(tok.Tokens, Token{
 					"=",
+					OPERATOR,
 					tok.position.Line,
 					tok.position.Column - 1,
 					false,
@@ -104,6 +109,7 @@ func (tok *Tokenizer) Tokenize() {
 			if tok.next == '<' && tok.curr == '<' {
 				tok.Tokens = append(tok.Tokens, Token{
 					"<<",
+					OPERATOR,
 					tok.position.Line,
 					tok.position.Column - 1,
 					false,
@@ -114,6 +120,7 @@ func (tok *Tokenizer) Tokenize() {
 			} else if tok.next == '>' && tok.curr == '>' {
 				tok.Tokens = append(tok.Tokens, Token{
 					">>",
+					OPERATOR,
 					tok.position.Line,
 					tok.position.Column - 1,
 					false,
@@ -124,6 +131,7 @@ func (tok *Tokenizer) Tokenize() {
 			} else if tok.next == '=' {
 				tok.Tokens = append(tok.Tokens, Token{
 					fmt.Sprintf("%c%c", tok.curr, '='),
+					OPERATOR,
 					tok.position.Line,
 					tok.position.Column - 1,
 					false,
@@ -143,6 +151,7 @@ func (tok *Tokenizer) Tokenize() {
 			case "include":
 				tok.Tokens = append(tok.Tokens, Token{
 					"include",
+					MACRO,
 					line,
 					column,
 					true,
@@ -153,15 +162,17 @@ func (tok *Tokenizer) Tokenize() {
 				lhs, rhs := tok.getDefineBody()
 				tok.Tokens = append(tok.Tokens, Token{
 					"define",
+					MACRO,
 					line,
 					column,
 					true,
 					false,
-					map[string]string{
-						string(lhs): string(rhs),
+					[]string{
+						string(lhs), string(rhs),
 					},
 				})
 			}
+
 		// numbers
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 			var num []rune
@@ -177,6 +188,7 @@ func (tok *Tokenizer) Tokenize() {
 
 			tok.Tokens = append(tok.Tokens, Token{
 				string(num),
+				NUMBER,
 				tok.position.Line,
 				tok.position.Column,
 				false,
@@ -197,15 +209,18 @@ func (tok *Tokenizer) Tokenize() {
 				line   = tok.position.Line
 				column = tok.position.Column - 1
 			)
+
 			if isAllowedIdentRune(tok.curr) {
 				for isAllowedIdentRune(tok.curr) {
 					ident = append(ident, tok.curr)
 					tok.Next()
 				}
 			}
+
 			if len(ident) == 0 {
 				tok.Tokens = append(tok.Tokens, Token{
 					string(tok.curr),
+					GARBAGE,
 					line,
 					column,
 					false,
@@ -214,12 +229,23 @@ func (tok *Tokenizer) Tokenize() {
 				})
 				tok.Next()
 			} else {
+				var (
+					iskwd   = isKeyword(string(ident))
+					toktype TokenType
+				)
+
+				if iskwd {
+					toktype = KEYWORD
+				} else {
+					toktype = IDENT
+				}
 				tok.Tokens = append(tok.Tokens, Token{
 					string(ident),
+					toktype,
 					line,
 					column,
 					false,
-					isKeyword(string(ident)),
+					iskwd,
 					"",
 				})
 			}
@@ -229,6 +255,15 @@ func (tok *Tokenizer) Tokenize() {
 
 		tok.Next()
 	}
+	tok.Tokens = append(tok.Tokens, Token{
+		"",
+		GARBAGE,
+		-1,
+		-1,
+		false,
+		false,
+		"",
+	})
 }
 
 func (tok *Tokenizer) EatSingleLineComment() {
@@ -369,7 +404,6 @@ func (tok *Tokenizer) getDefineBody() (lhs []rune, rhs []rune) {
 
 exit:
 	return
-
 }
 
 func (tok *Tokenizer) getMultilineDefineBody() (expr []rune) {
@@ -382,6 +416,7 @@ func (tok *Tokenizer) getMultilineDefineBody() (expr []rune) {
 			// no error throw
 			break
 		}
+
 		// consume last character residing at the end of a line
 		expr = append(expr, tok.curr)
 		// characters \n and \r at the end of expression serve as
@@ -403,7 +438,6 @@ func (tok *Tokenizer) getMultilineDefineBody() (expr []rune) {
 // par exemple:
 // #include <stdio.h>
 // #include "localfile.h"
-
 func (tok *Tokenizer) getIncludeBody() string {
 	tok.EatWhitespaces()
 

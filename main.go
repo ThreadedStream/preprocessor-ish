@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/ThreadedStream/preprocessor/preprocessor"
 	"github.com/ThreadedStream/preprocessor/tokenizer"
 	"os"
 )
@@ -25,8 +26,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	tokenizer := tokenizer.Init(stream)
-	tokenizer.Tokenize()
+	tok := tokenizer.Init(stream)
+	tok.Tokenize()
+
+	p := preprocessor.Init(tok)
+
+	p.Preprocess()
 
 	return
 }
