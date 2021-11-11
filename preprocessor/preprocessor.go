@@ -37,10 +37,12 @@ func (p *Preprocessor) Next() tokenizer.Token {
 	p.curr = p.consumeToken()
 	p.next = p.peek()
 
+	p.tOffset++
+
 	return p.curr
 }
 
-func (p *Preprocessor) Preprocess() {
+func (p *Preprocessor) Preprocess(path string) {
 	var source []rune
 
 	p.gatherMacroSymbols()
@@ -75,7 +77,7 @@ func (p *Preprocessor) Preprocess() {
 		p.Next()
 	}
 
-	outstream, err := os.OpenFile("source/macro_flood_test.h", os.O_RDWR, os.ModePerm)
+	outstream, err := os.OpenFile(path, os.O_RDWR, os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
@@ -96,9 +98,7 @@ func (p *Preprocessor) gatherMacroSymbols() {
 }
 
 func (p *Preprocessor) consumeToken() tokenizer.Token {
-	oldtOffset := p.tOffset
-	p.tOffset++
-	return p.tokenizer.Tokens[oldtOffset]
+	return p.tokenizer.Tokens[p.tOffset]
 }
 
 func (p *Preprocessor) isEOT(token tokenizer.Token) bool {
